@@ -1,37 +1,59 @@
 var socket = io();
 var messageTextBox =  jQuery('[name="message"]');
 
-
-
 socket.on('connect', () => {
   console.log("connected to server");
-
 });
 
-
+function scrollToBottom() {
+  var messages = jQuery('#messages');
+  var newMessage = messages.children('li:last-child');
+  var clientHeight = messages.prop('clientHeight');
+  var scrollTop = messages.prop('scrollTop');
+  var scrollHeight = messages.prop('scrollHeight');
+  var newMessageHeight = newMessage.innerHeight();
+  var lastMessageHeight = newMessage.prev().innerHeight();
+  if(newMessageHeight + lastMessageHeight + scrollTop + clientHeight >= scrollHeight){
+      messages.scrollTop(scrollHeight);
+      console.log("should scroll");
+  }
+}
 
 socket.on('disconnect', () => {
   console.log("user disconnected");
 });
 socket.on('newMessage', function(message){
     var formattedTime = moment(message.createdAt).format('h:mm a');
-
-	console.log("new message ", message);
-    var li = jQuery('<li></li>');
-    li.text(`${message.from} ${formattedTime}: ${message.text}`);
-    jQuery('#messages').append(li);
-
+    var template = jQuery('#message-template').html();
+    var html = Mustache.render(template, {
+        text: message.text,
+        from: message.from,
+        createdAt: formattedTime
+    });
+    jQuery('#messages').append(html);
+    scrollToBottom();
+	// console.log("new message ", message);
+    // var li = jQuery('<li></li>');
+    // li.text(`${message.from} ${formattedTime}: ${message.text}`);
+    // jQuery('#messages').append(li);
 });
 
 socket.on('newLocationMessage', function(message){
     var formattedTime = moment(message.createdAt).format('h:mm a');
-	var li = jQuery('<li></li>');
-    var a = jQuery('<a target="_blank">Get My Location</a>');
-    li.text(`${message.from} ${formattedTime}: `);
-    a.attr('href', message.url);
-    console.log(message.url);
-    li.append(a);
-    jQuery('#messages').append(li);
+    var locationTemplate = jQuery('#location-message-template').html();
+    var html = Mustache.render(locationTemplate, {
+        url: message.url,
+        from: message.from,
+        createdAt: formattedTime
+    });
+	// var li = jQuery('<li></li>');
+    // var a = jQuery('<a target="_blank">Get My Location</a>');
+    // li.text(`${message.from} ${formattedTime}: `);
+    // a.attr('href', message.url);
+    // console.log(message.url);
+    // li.append(a);
+    jQuery('#messages').append(html);
+    scrollToBottom();
 });
 
 var locationButton = jQuery("#sendLocation");
